@@ -1,57 +1,46 @@
-# streamlit_app.py
-import streamlit as st
+import nltk
 from nltk.tokenize import sent_tokenize, word_tokenize
 from nltk.corpus import stopwords
+from nltk.probability import FreqDist
 import heapq
-import nltk
-import nltk
-nltk.download('punkt')
 
-
-# Download NLTK data (one time)
+# 🔽 Download necessary NLTK resources (this uses internet)
 nltk.download('punkt')
 nltk.download('stopwords')
 
-st.title("Offline Text Summarizer (No API)")
+# 🔤 Input text
+text = """
+The Rashtrapati Bhavan houses the magnificent third century B.C. sandstone capital of the Ashokan Pillar known as the Rampurva Bull.
+It is one of the finest examples of Mauryan art.
+This capital was discovered in the 19th century at Rampurva in Bihar.
+It is now displayed prominently at the entrance hall of Rashtrapati Bhavan as a symbol of India’s rich heritage.
+"""
 
-#  input Text
-user_input = st.text_area("Enter your text:")
+# 🔣 Tokenize text into sentences and words
+sentences = sent_tokenize(text)
+words = word_tokenize(text.lower())
 
-if st.button("Summarize"):
-    if not user_input.strip():
-        st.warning("Please enter some text.")
-    else:
-        # Preprocessing stage
-        text = user_input
-        stop_words = set(stopwords.words("english"))
-        words = word_tokenize(text.lower())
-        word_frequencies = {}
-        for word in words:
-            if word not in stop_words and word.isalnum():
-                if word not in word_frequencies:
-                    word_frequencies[word] = 1
-                else:
-                    word_frequencies[word] += 1
+# 🛑 Remove stopwords and punctuation
+stop_words = set(stopwords.words("english"))
+words = [word for word in words if word.isalnum() and word not in stop_words]
 
-        max_freq = max(word_frequencies.values())
-        for word in word_frequencies:
-            word_frequencies[word] = word_frequencies[word] / max_freq
+# 📊 Frequency distribution
+freq_dist = FreqDist(words)
 
-        # Sentence scoring
-        sentence_list = sent_tokenize(text)
-        sentence_scores = {}
-        for sent in sentence_list:
-            for word in word_tokenize(sent.lower()):
-                if word in word_frequencies:
-                    if len(sent.split(' ')) < 30:
-                        if sent not in sentence_scores:
-                            sentence_scores[sent] = word_frequencies[word]
-                        else:
-                            sentence_scores[sent] += word_frequencies[word]
+# 🧠 Score sentences based on word frequency
+sentence_scores = {}
+for sentence in sentences:
+    for word in word_tokenize(sentence.lower()):
+        if word in freq_dist:
+            if sentence not in sentence_scores:
+                sentence_scores[sentence] = freq_dist[word]
+            else:
+                sentence_scores[sentence] += freq_dist[word]
 
-        # Get summary ready
-        summary_sentences = heapq.nlargest(3, sentence_scores, key=sentence_scores.get)
-        summary = ' '.join(summary_sentences)
+# ✂️ Summarize (top 2 sentences)
+summary_sentences = heapq.nlargest(2, sentence_scores, key=sentence_scores.get)
+summary = " ".join(summary_sentences)
 
-        st.subheader("Summary:")
-        st.write(summary)
+# 📤 Output
+print("\n📄 Original Text:\n", text)
+print("\n📝 Summary:\n", summary)
