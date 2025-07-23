@@ -1,9 +1,15 @@
 # streamlit_app.py
 import streamlit as st
-import nltk
 from nltk.tokenize import sent_tokenize, word_tokenize
 from nltk.corpus import stopwords
 import heapq
+import nltk
+
+try:
+    nltk.data.find('tokenizers/punkt')
+except LookupError:
+    nltk.download('punkt')
+
 
 # Download NLTK data (one time)
 nltk.download('punkt')
